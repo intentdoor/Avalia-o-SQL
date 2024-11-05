@@ -1,0 +1,116 @@
+
+--CRIA O BANCO DE DADOS
+CREATE DATABASE Biblioteca
+
+--Cria as tabelas
+CREATE TABLE Livros (
+	LivroID INT PRIMARY KEY,
+	NomeLivro VARCHAR(100),
+	NomeAutor VARCHAR(100),
+	Preco FLOAT
+)
+
+CREATE TABLE Clientes (
+	ClienteID INT PRIMARY KEY,
+	NomeCliente VARCHAR(100),
+
+)
+
+CREATE TABLE Aluguel (
+	RegistroID INT PRIMARY KEY,
+	DataRegistro DATETIME,
+	ClienteID INT,
+	LivroID INT,
+	Status VARCHAR(10)
+)
+
+--Inserindo os dados nas tabelas
+INSERT INTO Livros (LivroID,NomeLivro,NomeAutor,Preco)
+VALUES (1,'O Pequeno Princípe','Carlos Doroth',15.00),
+	   (2,'O Diário de Anne Frank','Anne Frank',20.00),
+	   (3,'A Volta no Mundo em 80 Dias','Ricardo Silva',25.00),
+	   (4,'A Revolução dos Bichos','George Orwell',23.00),
+	   (5,'1985','George Orwell',25.50)
+
+INSERT INTO Clientes (ClienteID,NomeCliente)
+VALUES (1,'Leandro Yoki'),
+	   (2,'Matheus Leitinho'),
+	   (3,'Raí Carvalho')
+
+Insert INTO Aluguel (RegistroID,DataRegistro,ClienteID,LivroID,Status)
+VALUES (1,'2024-11-01',2,3,'Em atraso'),
+	   (2,'2024-10-12',3,1,'Em atraso'),
+	   (3,'2024-10-08',1,2,'Devolvido')
+
+--EXEMPLO DE UMA WINDOWS FUNCTION-- Mostra o valor arrecadado por livros de um determinado autor
+
+SELECT
+DISTINCT(NomeAutor),
+SUM(Preco)OVER(PARTITION BY NomeAutor) AS Quantia_Vendida
+FROM Livros
+WHERE NomeAutor = 'George Orwell'
+
+
+--EXEMPLO DE UM TRIGGER--  Mostra que o sistema impossibilita a exclusão de dados da coluna 'Aluguel'
+
+CREATE OR ALTER TRIGGER ExcluirRegistro
+ON Aluguel
+INSTEAD OF DELETE
+AS
+BEGIN
+ IF EXISTS(SELECT 1 FROM Aluguel WHERE RegistroID IN (1,2,3))
+ BEGIN
+ PRINT'Não é possível excluir dados desse campo!!'
+ RETURN
+END
+END
+
+DELETE FROM Aluguel WHERE RegistroID = 2
+
+--EXEMPLO DE UM SUBQUERY--  Realiza uma consulta dos clientes que estão devendo livros
+SELECT NomeCliente
+FROM Clientes
+WHERE ClienteID IN (
+	SELECT ClienteID
+	FROM Aluguel
+	WHERE Status = 'Em atraso')
+
+
+
+
+
+--EXEMPLO DE UMA FUNCTION-- nao terminada
+CREATE FUNCTION Rendadiaria (@somadagrana FLOAT)
+RETURNS FLOAT
+AS
+BEGIN
+	SUM(Preco)
+END
+
+SELECT ClienteID , dbo.Tempodeatraso2(DataRegistro) AS Tempo_Devendo FROM Aluguel
+
+
+--EXEMPLO DE UMA VIEW-- nao terminada
+
+CREATE VIEW Escolha_do_cliente
+AS
+SELECT 
+Clientes.NomeCliente,
+Livros.NomeLivro,
+Aluguel.ClienteID
+FROM Clientes
+JOIN Livros
+ON Livros.NomeLivro = Clientes.NomeCliente
+JOIN Aluguel
+ON Aluguel.ClienteID = Clientes.ClienteID
+
+SELECT * FROM Escolha_do_cliente
+ 
+
+ --EXEMPLO DE UMA CTE-- nao terminada
+ WITH Escolha_do_cliente
+ AS(
+ SELECT 
+Clientes.NomeCliente,
+Livros.NomeLivro
+FROM Calendula
