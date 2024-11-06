@@ -141,3 +141,33 @@ SELECT *
 FROM RegistrosDetalhados
 ORDER BY DataRegistro;
 
+--EXEMPLO DE UMA PROCEDURE -- Busca informaçoes dos alugueis pelo id do cliente
+
+IF EXISTS (SELECT 1 FROM SYS.OBJECTS WHERE TYPE='P' AND NAME ='BuscarAluguelPorCliente')
+BEGIN
+DROP PROCEDURE BuscarAluguelPorCliente
+END
+GO
+
+CREATE PROCEDURE BuscarAluguelPorCliente
+	@ClienteID INT
+AS
+BEGIN
+	SELECT
+		CLIENTES.NomeCliente,
+		Livros.NomeLivro,
+		Aluguel.DataRegistro,
+		Aluguel.Status
+	FROM Aluguel
+	JOIN
+		Clientes ON Aluguel.clienteID = Clientes.ClienteID
+	JOIN
+		Livros ON Aluguel.LivroID = Livros.LivroID
+	WHERE Clientes.ClienteID = @ClienteID
+	ORDER BY
+		Aluguel.DataRegistro;
+END
+
+EXEC BuscarAluguelPorCliente @ClienteID = 3
+
+--EXEMPLO DE UM LOOP--
