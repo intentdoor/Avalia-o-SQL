@@ -36,10 +36,10 @@ INSERT INTO Clientes (ClienteID,NomeCliente)
 VALUES (1,'Leandro Yoki'),
 	   (2,'Matheus Leitinho'),
 	   (3,'Raí Carvalho')
-
+	  
 Insert INTO Aluguel (RegistroID,DataRegistro,ClienteID,LivroID,Status)
 VALUES (1,'2024-11-01',2,3,'Em atraso'),
-	   (2,'2024-10-12',3,1,'Em atraso'),
+	   (2,'2024-09-08',3,1,'Em atraso'),
 	   (3,'2024-10-08',1,2,'Devolvido')
 
 --EXEMPLO DE UMA WINDOWS FUNCTION-- Mostra o valor arrecadado por livros de um determinado autor
@@ -79,38 +79,65 @@ WHERE ClienteID IN (
 
 
 
---EXEMPLO DE UMA FUNCTION-- nao terminada
-CREATE FUNCTION Rendadiaria (@somadagrana FLOAT)
-RETURNS FLOAT
+--EXEMPLO DE UMA FUNCTION-- Mostra quantos dias determinada pessoa está devendo um livro
+
+CREATE FUNCTION TempoDeAluguel (@DataRegistro DATETIME)
+RETURNS INT
 AS
 BEGIN
-	SUM(Preco)
+    RETURN DATEDIFF(DAY, @DataRegistro, GETDATE())
 END
 
-SELECT ClienteID , dbo.Tempodeatraso2(DataRegistro) AS Tempo_Devendo FROM Aluguel
-
-
---EXEMPLO DE UMA VIEW-- nao terminada
-
-CREATE VIEW Escolha_do_cliente
-AS
 SELECT 
-Clientes.NomeCliente,
-Livros.NomeLivro,
-Aluguel.ClienteID
-FROM Clientes
-JOIN Livros
-ON Livros.NomeLivro = Clientes.NomeCliente
-JOIN Aluguel
-ON Aluguel.ClienteID = Clientes.ClienteID
+    c.NomeCliente, 
+    l.NomeLivro, 
+    dbo.TempoDeAluguel(a.DataRegistro) AS DiasDeAluguel
+FROM 
+    Aluguel a
+JOIN 
+    Clientes c ON a.ClienteID = c.ClienteID
+JOIN 
+    Livros l ON a.LivroID = l.LivroID
+WHERE
+    a.Status = 'Em atraso' 
 
-SELECT * FROM Escolha_do_cliente
- 
+--EXEMPLO DE UMA VIEW-- mostra  os registros de alugueis dos livros com informaçoes de outras tabelas  
+--(atribuindo uma letra antes de uma coluna da pra referenciar varios fatores a uma letra só,assim diminui código)
+CREATE VIEW vw_AlugueisDetalhados AS
+SELECT 
+    a.RegistroID,
+    a.DataRegistro,
+    c.NomeCliente,
+    l.NomeLivro,
+    l.NomeAutor,
+    a.Status,
+    l.Preco
+FROM 
+    Aluguel a
+JOIN 
+    Clientes c ON a.ClienteID = c.ClienteID
+JOIN 
+    Livros l ON a.LivroID = l.LivroID;
 
- --EXEMPLO DE UMA CTE-- nao terminada
- WITH Escolha_do_cliente
- AS(
- SELECT 
-Clientes.NomeCliente,
-Livros.NomeLivro
-FROM Calendula
+SELECT * FROM vw_AlugueisDetalhados;
+
+ --EXEMPLO DE UMA CTE-- Mostra todos os registros de algueis
+
+	WITH RegistrosDetalhados AS (
+    SELECT
+        Clientes.NomeCliente,
+        Livros.NomeLivro,
+        Aluguel.DataRegistro,
+        Aluguel.Status
+    FROM
+        Aluguel
+    JOIN
+        Clientes ON Aluguel.ClienteID = Clientes.ClienteID
+    JOIN
+        Livros ON Aluguel.LivroID = Livros.LivroID
+)
+
+SELECT *
+FROM RegistrosDetalhados
+ORDER BY DataRegistro;
+
